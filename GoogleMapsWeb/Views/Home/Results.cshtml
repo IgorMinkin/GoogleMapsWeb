@@ -45,7 +45,8 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $('.lnkViewDetails').click(function () {
+        $('.lnkViewDetails').click(function (e) {
+            e.preventDefault();
             var refCode = $(this).attr('data-ref');
             var that = this;
             var detailsDiv = $(that).next();

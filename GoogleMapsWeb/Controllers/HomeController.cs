@@ -37,6 +37,11 @@ namespace GoogleMapsWeb.Controllers
                 ViewBag.Message = "No locations match you search criteria.";
                 return View("Results", new QueryResult());
             }
+            else if(locations.Count > 1)
+            {
+                return View("Locations",
+                            new QueryResult() {Locations = locations, where = address, what = place});
+            }
                 
              var places = FindPlaces(locations[0], what);
             
@@ -45,11 +50,18 @@ namespace GoogleMapsWeb.Controllers
 
         }
 
+        public ActionResult FindByLocation(float lat, float lng, string what)
+        {
+            var places = FindPlaces(new Location() {lat = lat, lng = lng}, what);
+            return View("Results", new QueryResult {Places = places});
+        }
 
         public JsonResult GetPlaceDetails(string RefCode)
         {
             return RefCode == null ? null : Json(GetPlaceDetailsInternal(RefCode), JsonRequestBehavior.AllowGet);
         }
+
+
 
         private PlaceDetails GetPlaceDetailsInternal(string refCode)
         {

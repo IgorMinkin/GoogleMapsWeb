@@ -1,0 +1,24 @@
+﻿@model GoogleMapsWeb.Models.QueryResult
+
+@{
+    ViewBag.Title = "Locations";
+}
+
+<h2>Locations</h2>
+
+@Html.Partial("SearchBox", Model)
+
+<div>
+    <div id="locations" style="width: 400px;">
+        @foreach (var location in Model.Locations)
+        {
+            <div>
+                <b>@location.formatted_address</b> <br/>
+                Latitude: @location.lat<br/>
+                Longitue: @location.lng<br/>
+                @Html.ActionLink("Select this location","FindByLocation", new { lat = location.lat, lng = location.lng, what = Model.what})
+                <hr/>
+            </div>
+        }
+    </div>
+</div>
