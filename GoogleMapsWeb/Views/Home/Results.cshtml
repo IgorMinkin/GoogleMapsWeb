@@ -1,0 +1,81 @@
+﻿@model GoogleMapsWeb.Models.QueryResult
+
+@{
+    ViewBag.Title = "Results";
+}
+
+<h2>Search Google Places</h2>
+
+
+@Html.Partial("SearchBox",Model)
+
+<div id="message">
+    @ViewBag.Message
+</div>
+<div id="results" style="margin: 20px 0 0 20px;">
+    <div id="status">
+        Found @(Model.Locations == null ? 0 : Model.Locations.Count)  Matching Location(s)
+    </div>
+    <div id="locations">
+        @foreach(var location in Model.Locations)
+        {
+            <div>
+                <b>@location.formatted_address</b><br/>
+                Latitude: @location.lat<br/>
+                Longitue: @location.lng
+            </div>
+        }
+    </div>
+    <div id="places">
+        <p>
+            Found @Model.Places.Count Matching Place(s)
+        </p>
+        
+        @foreach(var place in Model.Places)
+        {
+            <div style="margin: 10px 0 20px 0;padding: 5px; border-bottom: solid #666 1px;width: 300px;">
+                <b>@place.name</b><br/>
+                @place.vicinity<br/>
+                <a href="#" class="lnkViewDetails" data-ref="@place.reference">View Details</a>
+                <div class="placeDetails" style="display: none;"></div>
+            </div>
+        }
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.lnkViewDetails').click(function () {
+            var refCode = $(this).attr('data-ref');
+            var that = this;
+            var detailsDiv = $(that).next();
+
+            //if details not fetched get from google
+            if ($(this).attr('data-fetched') !== 'true') {
+                $.ajax({
+                    type: "POST",
+                    url: "GetPlaceDetails",
+                    dataType: "json",
+                    data: { RefCode: refCode }
+                }).done(function (data) {
+                    var htmlString = "";
+                    htmlString += data.formatted_phone_number === undefined ? "" : data.formatted_phone_number;
+                    htmlString += (htmlString !== "") && (data.website !== undefined) ? "<br/>" : "";
+                    htmlString += data.website === undefined ? "" : '<a target="blank" href="' + data.website + '">' + data.website + '<a/>';
+                    detailsDiv.html(htmlString);
+                    $(that).text('Hide Details');
+                    $(that).attr('data-fetched', 'true');
+                    detailsDiv.show('slow');
+                });
+            }
+
+            if ($(that).text() === 'Hide Details') {
+                detailsDiv.hide('normal');
+                $(that).text('Show Details');
+            } else {
+                detailsDiv.show('normal');
+                $(that).text('Hide Details');
+            }
+        });
+    });
+</script>
