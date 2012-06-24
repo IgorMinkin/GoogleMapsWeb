@@ -11,5 +11,7 @@ namespace GoogleMapsWeb.Models
         public string name { get; set; }
         public string vicinity { get; set; }
         public string reference { get; set; }
+        public float lat { get; set; }
+        public float lng { get; set; }
 }
 }

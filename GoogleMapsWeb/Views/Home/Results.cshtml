@@ -13,31 +13,40 @@
     @ViewBag.Message
 </div>
 <div id="results" style="margin: 20px 0 0 20px;">
-    <div id="status">
-        Found @(Model.Locations == null ? 0 : Model.Locations.Count)  Matching Location(s)
-    </div>
     <div id="locations">
-        @foreach(var location in Model.Locations)
-        {
-            <div>
-                <b>@location.formatted_address</b><br/>
-                Latitude: @location.lat<br/>
-                Longitue: @location.lng
-            </div>
+        @{
+            if(Model.Locations.Count > 0)
+            {
+                <div>
+                    <b>@Model.Locations[0].formatted_address</b><br/>
+                    Latitude: <label id="lblLatitude">@Model.Locations[0].lat</label> <br/>
+                    Longitue: <label id="lblLongitude">@Model.Locations[0].lng</label> 
+                </div>
+            }
         }
     </div>
+    <a href="#" id="lnkShowMap">Hide Map</a>
+    <div id="map_canvas" style="width:600px; height:400px"></div>
     <div id="places">
         <p>
             Found @Model.Places.Count Matching Place(s)
         </p>
         
-        @foreach(var place in Model.Places)
+        @foreach (var place in Model.Places)
         {
             <div style="margin: 10px 0 20px 0;padding: 5px; border-bottom: solid #666 1px;width: 300px;">
                 <b>@place.name</b><br/>
                 @place.vicinity<br/>
                 <a href="#" class="lnkViewDetails" data-ref="@place.reference">View Details</a>
                 <div class="placeDetails" style="display: none;"></div>
+                @Html.Hidden("hiddenPlace", @place.id, new Dictionary<string, object>()
+                                                {
+                                                    {"data-lat", @place.lat},
+                                                    {"data-lng", @place.lng},
+                                                    {"data-name", @place.name},
+                                                    {"data-vicinity", @place.vicinity},
+                                                    {"class", "hdPlace"}
+                                                })
             </div>
         }
     </div>
@@ -45,38 +54,98 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $('.lnkViewDetails').click(function (e) {
-            e.preventDefault();
-            var refCode = $(this).attr('data-ref');
-            var that = this;
-            var detailsDiv = $(that).next();
+        //Show place details
+        (function () {
+            $('.lnkViewDetails').click(function (e) {
+                e.preventDefault();
+                var refCode = $(this).attr('data-ref');
+                var that = this;
+                var detailsDiv = $(that).next();
 
-            //if details not fetched get from google
-            if ($(this).attr('data-fetched') !== 'true') {
-                $.ajax({
-                    type: "POST",
-                    url: "GetPlaceDetails",
-                    dataType: "json",
-                    data: { RefCode: refCode }
-                }).done(function (data) {
-                    var htmlString = "";
-                    htmlString += data.formatted_phone_number === undefined ? "" : data.formatted_phone_number;
-                    htmlString += (htmlString !== "") && (data.website !== undefined) ? "<br/>" : "";
-                    htmlString += data.website === undefined ? "" : '<a target="blank" href="' + data.website + '">' + data.website + '<a/>';
-                    detailsDiv.html(htmlString);
+                //if details not fetched get from google
+                if ($(this).attr('data-fetched') !== 'true') {
+                    $.ajax({
+                        type: "POST",
+                        url: "GetPlaceDetails",
+                        dataType: "json",
+                        data: { RefCode: refCode }
+                    }).done(function (data) {
+                        var htmlString = "";
+                        htmlString += data.formatted_phone_number === undefined ? "" : data.formatted_phone_number;
+                        htmlString += (htmlString !== "") && (data.website !== undefined) ? "<br/>" : "";
+                        htmlString += data.website === undefined ? "" : '<a target="blank" href="' + data.website + '">' + data.website + '<a/>';
+                        detailsDiv.html(htmlString);
+                        $(that).text('Hide Details');
+                        $(that).attr('data-fetched', 'true');
+                        detailsDiv.show('slow');
+                    });
+                }
+
+                if ($(that).text() === 'Hide Details') {
+                    detailsDiv.hide('normal');
+                    $(that).text('Show Details');
+                } else {
+                    detailsDiv.show('normal');
                     $(that).text('Hide Details');
-                    $(that).attr('data-fetched', 'true');
-                    detailsDiv.show('slow');
+                }
+            });
+        })();
+
+        //Show map
+        (function () {
+            var lat = $('#lblLatitude').text();
+            var lng = $('#lblLongitude').text();
+
+            var myOptions = {
+                center: new google.maps.LatLng(lat, lng),
+                zoom: 14,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            var map = new google.maps.Map(document.getElementById("map_canvas"),
+                myOptions);
+
+            $('.hdPlace').each(function () {
+                var that = this;
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng($(this).attr('data-lat'), $(this).attr('data-lng')),
+                    map: map,
+                    title: $(this).attr('data-name')
                 });
+
+                var msg = '<b>'
+                            + $(that).attr('data-name')
+                            + '</b>'
+                            + '<br/>'
+                            + $(that).attr('data-vicinity');
+
+                attachMessage(marker, msg);
+
+            });
+
+            function attachMessage(marker, msg) {
+                var infowindow = new google.maps.InfoWindow(
+                      {
+                          content: msg,
+                          size: new google.maps.Size(50, 50)
+                      });
+
+                google.maps.event.addListener(marker, 'click', function () { infowindow.open(map, marker); });
             }
 
-            if ($(that).text() === 'Hide Details') {
-                detailsDiv.hide('normal');
-                $(that).text('Show Details');
-            } else {
-                detailsDiv.show('normal');
-                $(that).text('Hide Details');
-            }
-        });
+            $('#lnkShowMap').click(function () {
+                var map = $('#map_canvas');
+                if ($(this).text() === "Show Map") {
+                    map.show('normal');
+                    $(this).text('Hide Map');
+                }
+                else {
+                    map.hide('normal');
+                    $(this).text('Show Map');
+                }
+            });
+
+        })();
+
     });
 </script>

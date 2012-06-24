@@ -4,10 +4,7 @@
     ViewBag.Title = "Locations";
 }
 
-<h2>Locations</h2>
-
-@Html.Partial("SearchBox", Model)
-
+<h3>Multiple Locations Found - Please Choose Your Location</h3>
 <div>
     <div id="locations" style="width: 400px;">
         @foreach (var location in Model.Locations)

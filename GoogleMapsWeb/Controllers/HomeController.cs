@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.Mvc;
 using GoogleMapsWeb.Models;
 using Newtonsoft.Json.Linq;
@@ -11,7 +13,7 @@ namespace GoogleMapsWeb.Controllers
 {
     public class HomeController : Controller
     {
-        protected static string ApiKey = "AIzaSyBj5xs7XOoAcTnPu2SAe4fnFU2FUHuKrmo";
+        protected static string ApiKey = ConfigurationManager.AppSettings["ApiKey"];
         protected static string GeocodingBaseUrl = "http://maps.googleapis.com/maps/api/geocode/json";
         protected static string PlacesBaseUrl = "https://maps.googleapis.com/maps/api/place/search/json";
         protected static string PlaceDetailsBaseUrl = "https://maps.googleapis.com/maps/api/place/details/json";
@@ -53,7 +55,10 @@ namespace GoogleMapsWeb.Controllers
         public ActionResult FindByLocation(float lat, float lng, string what)
         {
             var places = FindPlaces(new Location() {lat = lat, lng = lng}, what);
-            return View("Results", new QueryResult {Places = places});
+            return View("Results", new QueryResult {Places = places, Locations = new List<Location>()
+                                                                                     {
+                                                                                         new Location() {lat = lat, lng = lng}
+                                                                                     }});
         }
 
         public JsonResult GetPlaceDetails(string RefCode)
@@ -113,16 +118,16 @@ namespace GoogleMapsWeb.Controllers
         {
             var client = new RestClient(PlacesBaseUrl);
             var request = new RestRequest(Method.GET);
-            request.AddParameter("key", ApiKey);
+            request.AddParameter("key", WebConfigurationManager.AppSettings["ApiKey"]);
             request.AddParameter("location", location.lat + "," +location.lng);
-            request.AddParameter("rankby", "distance");
+            request.AddParameter("radius", "1000");
 
             if (!String.IsNullOrWhiteSpace(businessName))
             {
                 request.AddParameter("name", businessName);
             }
             request.AddParameter("sensor", "false");
-            request.AddParameter("types", "parking|train_station");
+            request.AddParameter("types", "parking");
 
             IRestResponse response = client.Execute(request);
 
@@ -132,7 +137,9 @@ namespace GoogleMapsWeb.Controllers
                                                             id = result.SelectToken("id").ToString(),
                                                             name = result.SelectToken("name").ToString(),
                                                             vicinity = result.SelectToken("vicinity").ToString(),
-                                                            reference = result.SelectToken("reference").ToString()
+                                                            reference = result.SelectToken("reference").ToString(),
+                                                            lat = (float) result.SelectToken("geometry.location.lat"),
+                                                            lng = (float) result.SelectToken("geometry.location.lng")
                                                         }).ToList();
 
         }
