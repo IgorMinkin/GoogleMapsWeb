@@ -13,20 +13,20 @@
     @ViewBag.Message
 </div>
 <div id="results" style="margin: 20px 0 0 20px;">
-    <div id="locations">
+    <div id="locations" style="padding-bottom: 5px;">
         @{
             if(Model.Locations.Count > 0)
             {
                 <div>
                     <b>@Model.Locations[0].formatted_address</b><br/>
                     Latitude: <label id="lblLatitude">@Model.Locations[0].lat</label> <br/>
-                    Longitue: <label id="lblLongitude">@Model.Locations[0].lng</label> 
+                    Longitude: <label id="lblLongitude">@Model.Locations[0].lng</label> 
                 </div>
             }
         }
     </div>
     <a href="#" id="lnkShowMap">Hide Map</a>
-    <div id="map_canvas" style="width:600px; height:400px"></div>
+    <div id="map_canvas" style="width:630px; height:400px;padding-top:5px;"></div>
     <div id="places">
         <p>
             Found @Model.Places.Count Matching Place(s)
@@ -37,7 +37,7 @@
             <div style="margin: 10px 0 20px 0;padding: 5px; border-bottom: solid #666 1px;width: 300px;">
                 <b>@place.name</b><br/>
                 @place.vicinity<br/>
-                <a href="#" class="lnkViewDetails" data-ref="@place.reference">View Details</a>
+                <a href="#" class="lnkViewDetails" data-ref="@place.reference">Show Details</a>
                 <div class="placeDetails" style="display: none;"></div>
                 @Html.Hidden("hiddenPlace", @place.id, new Dictionary<string, object>()
                                                 {
@@ -54,6 +54,8 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
+
+        $('input:submit').button();
         //Show place details
         (function () {
             $('.lnkViewDetails').click(function (e) {
@@ -95,10 +97,13 @@
         (function () {
             var lat = $('#lblLatitude').text();
             var lng = $('#lblLongitude').text();
+            var radius = $("#hiddenRadius").val();
+
+            var zoom = calcZoomLevel(radius);
 
             var myOptions = {
                 center: new google.maps.LatLng(lat, lng),
-                zoom: 14,
+                zoom: zoom,
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             };
 
@@ -122,6 +127,13 @@
                 attachMessage(marker, msg);
 
             });
+
+            function calcZoomLevel(radius) {
+                if (radius < 1.25)
+                    return 14;
+                else
+                    return 13;
+            }
 
             function attachMessage(marker, msg) {
                 var infowindow = new google.maps.InfoWindow(

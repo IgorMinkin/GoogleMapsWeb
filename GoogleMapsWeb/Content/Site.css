@@ -94,3 +94,7 @@ div.columnRight {
 div.columnRight input[type='text'] {
     width: 240px;
 }
+
+input.inputRadius {
+    border:0; color:#037400; font-weight:bold;
+}

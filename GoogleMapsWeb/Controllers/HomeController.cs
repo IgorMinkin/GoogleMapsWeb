@@ -17,6 +17,7 @@ namespace GoogleMapsWeb.Controllers
         protected static string GeocodingBaseUrl = "http://maps.googleapis.com/maps/api/geocode/json";
         protected static string PlacesBaseUrl = "https://maps.googleapis.com/maps/api/place/search/json";
         protected static string PlaceDetailsBaseUrl = "https://maps.googleapis.com/maps/api/place/details/json";
+        protected static double DefaultSearchRadius = 1000.0;
 
         //
         // GET: /Home/
@@ -27,10 +28,12 @@ namespace GoogleMapsWeb.Controllers
         }
 
         [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult Index(string where, string what)
+        public ActionResult Index(string where, string what, string radius)
         {
             var address = where;
             var place = what;
+            var radiusMi = Double.Parse(radius.Substring(0, radius.IndexOf('m')));
+            var radiusMeter = radiusMi * 1.6 * 1000;
 
             var locations = FindLocation(address);
 
@@ -39,22 +42,23 @@ namespace GoogleMapsWeb.Controllers
                 ViewBag.Message = "No locations match you search criteria.";
                 return View("Results", new QueryResult());
             }
-            else if(locations.Count > 1)
+             
+            if(locations.Count > 1)
             {
                 return View("Locations",
-                            new QueryResult() {Locations = locations, where = address, what = place});
+                            new QueryResult() {Locations = locations, where = address, what = place, radius = radiusMi});
             }
                 
-             var places = FindPlaces(locations[0], what);
+             var places = FindPlaces(locations[0], what, radiusMeter);
             
             
-            return View("Results", new QueryResult() {Locations = locations, Places = places, where = address, what = place});
+            return View("Results", new QueryResult() {Locations = locations, Places = places, where = address, what = place, radius = radiusMi});
 
         }
 
         public ActionResult FindByLocation(float lat, float lng, string what)
         {
-            var places = FindPlaces(new Location() {lat = lat, lng = lng}, what);
+            var places = FindPlaces(new Location() {lat = lat, lng = lng}, what, DefaultSearchRadius);
             return View("Results", new QueryResult {Places = places, Locations = new List<Location>()
                                                                                      {
                                                                                          new Location() {lat = lat, lng = lng}
@@ -114,13 +118,13 @@ namespace GoogleMapsWeb.Controllers
             return locations;
         }
 
-        private List<Place> FindPlaces(Location location, string businessName)
+        private List<Place> FindPlaces(Location location, string businessName, double radius)
         {
             var client = new RestClient(PlacesBaseUrl);
             var request = new RestRequest(Method.GET);
             request.AddParameter("key", WebConfigurationManager.AppSettings["ApiKey"]);
             request.AddParameter("location", location.lat + "," +location.lng);
-            request.AddParameter("radius", "1000");
+            request.AddParameter("radius", radius);
 
             if (!String.IsNullOrWhiteSpace(businessName))
             {

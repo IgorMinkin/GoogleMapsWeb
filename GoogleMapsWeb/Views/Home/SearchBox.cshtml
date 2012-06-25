@@ -1,23 +1,58 @@
 ﻿@model GoogleMapsWeb.Models.QueryResult
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#slider-range-min").slider({
+            range: "min",
+            value: @Model.radius,
+            min: .5,
+            max: 3,
+            step: 0.25,
+            slide: function(event, ui) {
+                $("#radius").val(ui.value + "mi");
+                $("#hiddenRadius").val(ui.value);
+            }
+        });
+
+        $("#radius").val($("#slider-range-min").slider("value") + "mi");
+        $("#hiddenRadius").val($("#slider-range-min").slider("value"));
+        $('input:submit').button();
+    });
+</script>
+
+
 @using (Html.BeginForm("Index","Home"))
 {
-    <fieldset style="width: 630px;padding: 15px;">
+    <fieldset style="width: 570px;padding: 15px;">
         <div class="row">
-        <div class="columnLeft">Location (i.e. Midtown Manhattan)</div>
-        <div class="columnRight">Business Name (i.e. Central Parking)</div>
-    </div>
-    <div class="row">
-        <div class="columnLeft">
-            @Html.TextBoxFor(m => m.where)
+            <div class="columnLeft">Location (i.e. Midtown Manhattan)</div>
+            <div class="columnRight">Business Name (i.e. Central Parking)</div>
         </div>
-        <div class="columnRight">
-             @Html.TextBoxFor(m => m.what) 
+        <div class="row">
+            <div class="columnLeft">
+                @Html.TextBoxFor(m => m.where)
+            </div>
+            <div class="columnRight">
+                @Html.TextBoxFor(m => m.what) 
+            </div>
+            <!--<div class="columnRight">
+                
+            </div>-->                  
         </div>
-        <div class="columnRight">
-            <input type="submit" value="Find"/>
+        <div style="width: 550px;">
+            <p>
+                <label for="radius">Search Radius:</label>
+                @Html.TextBox("radius","", new { id = "radius", @class = "inputRadius" })
+                @Html.HiddenFor(m => m.radius, new { id = "hiddenRadius"})
+            </p>
+
+            <div id="slider-range-min"></div>
         </div>
-    </div>
+        <div class="row">
+            <div style="padding-top: 20px;float: right;margin-right: 19px;">
+                <input type="submit" value="Search Parking Lots"/>
+            </div>
+        </div>
     </fieldset>
     
 }

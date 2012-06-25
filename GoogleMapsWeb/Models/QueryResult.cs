@@ -11,11 +11,13 @@ namespace GoogleMapsWeb.Models
         public IList<Location> Locations { get; set; }
         public string where { get; set; }
         public string what { get; set; }
+        public double radius { get; set; }
  
         public QueryResult()
         {
             Places = new List<Place>();
             Locations = new List<Location>();
+            radius = 0.75;
         }
     }
 }
