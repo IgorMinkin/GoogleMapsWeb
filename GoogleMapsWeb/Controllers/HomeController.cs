@@ -132,6 +132,7 @@ namespace GoogleMapsWeb.Controllers
             }
             request.AddParameter("sensor", "false");
             request.AddParameter("types", "parking");
+            //request.AddParameter("keyword", "parking garage");
 
             IRestResponse response = client.Execute(request);
 
